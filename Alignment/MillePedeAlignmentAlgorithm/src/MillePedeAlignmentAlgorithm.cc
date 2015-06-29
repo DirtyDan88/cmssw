@@ -241,6 +241,10 @@ void MillePedeAlignmentAlgorithm::initialize(const edm::EventSetup &setup,
 }
 
 //____________________________________________________
+bool MillePedeAlignmentAlgorithm::supportsCalibrations() {
+  return true;
+}
+//____________________________________________________
 bool MillePedeAlignmentAlgorithm::addCalibrations(const std::vector<IntegratedCalibrationBase*> &iCals)
 {
   theCalibrations.insert(theCalibrations.end(), iCals.begin(), iCals.end());
@@ -276,6 +280,11 @@ bool MillePedeAlignmentAlgorithm::setParametersForRunRange(const RunRange &runra
 //____________________________________________________
 void MillePedeAlignmentAlgorithm::terminate(const edm::EventSetup& iSetup)
 {
+  terminate();
+}
+
+void MillePedeAlignmentAlgorithm::terminate()
+{
   delete theMille;// delete to close binary before running pede below (flush would be enough...)
   theMille = 0;
 
@@ -305,6 +314,15 @@ void MillePedeAlignmentAlgorithm::terminate(const edm::EventSetup& iSetup)
   theLastWrittenIov = 0;
 }
 
+//_____________________________________________________________________________
+bool MillePedeAlignmentAlgorithm::processesEvents()
+{
+  if (isMode(myMilleBit)) {
+    return true;
+  } else {
+    return false;
+  }
+}
 // Run the algorithm on trajectories and tracks -------------------------------
 //____________________________________________________
 void MillePedeAlignmentAlgorithm::run(const edm::EventSetup &setup, const EventInfo &eventInfo)
