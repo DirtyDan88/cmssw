@@ -9,11 +9,12 @@ from L1Trigger.Configuration.L1Trigger_custom import customiseL1Menu
 # customization of run L1 emulator for 2015 Stage 1 configuration
 def customiseSimL1EmulatorForStage1(process):
 
-    process.load("L1Trigger.L1TCommon.l1tDigiToRaw_cfi")
-    process.load("L1Trigger.L1TCommon.l1tRawToDigi_cfi")
+    process.load("L1Trigger.L1TCommon.l1tDigiToRaw_cfi")    
+    process.load("EventFilter.L1TRawToDigi.caloStage1Digis_cfi")
     process.load("L1Trigger.L1TCommon.caloStage1LegacyFormatDigis_cfi")
 
     process.load('L1Trigger.L1TCalorimeter.caloStage1Params_cfi')
+    process.load('L1Trigger.L1TCalorimeter.caloConfigStage1PP_cfi')
     process.load('L1Trigger.L1TCalorimeter.L1TCaloStage1_cff')
 
     if hasattr(process, 'simGtDigis'):
@@ -79,13 +80,17 @@ def customiseSimL1EmulatorForStage1(process):
 from L1Trigger.Configuration.customise_overwriteL1Menu import *
 
 def customiseSimL1EmulatorForPostLS1_lowPU(process):
-    # move to the lowPU v2 L1 menu once the HLT has been updated accordingly
-    process = L1Menu_Collisions2015_lowPU_v2(process)
+    # load the Stage 1 configuration
+    process = customiseSimL1EmulatorForStage1(process)
+    # move to the lowPU v3 L1 menu once the HLT has been updated accordingly
+    process = L1Menu_Collisions2015_lowPU_v3(process)
     return process
 
 def customiseSimL1EmulatorForPostLS1_50ns(process):
-    # move to the 50ns v0 L1 menu once the HLT has been updated accordingly
-    process = L1Menu_Collisions2015_50ns_v1(process)
+    # load the Stage 1 configuration
+    process = customiseSimL1EmulatorForStage1(process)
+    # move to the 50ns v2 L1 menu once the HLT has been updated accordingly
+    process = L1Menu_Collisions2015_50ns_v2(process)
     return process
 
 def customiseSimL1EmulatorForPostLS1_25ns(process):
@@ -99,7 +104,19 @@ def customiseSimL1EmulatorForPostLS1_HI(process):
     # load the Stage 1 configuration
     process = customiseSimL1EmulatorForStage1(process)
     # set the Stage 1 heavy ions-specific parameters
-    process.simCaloStage1Digis.FirmwareVersion = cms.uint32(1)
+    # all of these should eventually end up in a GT
+    if hasattr(process,'RCTConfigProducers'):
+        process.RCTConfigProducers.eicIsolationThreshold = cms.uint32(7)
+        process.RCTConfigProducers.hOeCut = cms.double(999)
+        process.RCTConfigProducers.eMinForHoECut = cms.double(999)
+        process.RCTConfigProducers.eMaxForHoECut = cms.double(999)
+        process.RCTConfigProducers.hMinForHoECut = cms.double(999)
+        process.RCTConfigProducers.eMinForFGCut = cms.double(999)
+    if hasattr(process,'caloStage1Params'):     
+        process.caloStage1Params.jetSeedThreshold = cms.double(0.)
+        process.caloStage1Params.regionPUSType = cms.string("zeroWall")
+    if hasattr(process,'caloConfig'):
+        process.caloConfig.fwVersionLayer2 = cms.uint32(1)
     # move to the heavy ions draft L1 menu once the HLT has been updated accordingly
     process = L1Menu_CollisionsHeavyIons2015_v0(process)
     return process

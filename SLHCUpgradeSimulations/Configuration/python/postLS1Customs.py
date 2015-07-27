@@ -1,5 +1,7 @@
 import FWCore.ParameterSet.Config as cms
 
+from RecoTracker.Configuration.customiseForRunI import customiseForRunI
+
 def customisePostLS1_Common(process):
 
     # deal with CSC separately
@@ -98,11 +100,27 @@ def customisePostLS1_HI(process):
 
     return process
 
+def customisePostLS1_B0T(process):
+    # 50ns only
+
+    process=customisePostLS1_50ns(process)
+    process=customiseForRunI(process)
+
+    return process
+
+def customisePostLS1_B0T_lowPU(process):
+    # 50ns only
+
+    process=customisePostLS1_lowPU(process)
+    process=customiseForRunI(process)
+
+    return process
+
 
 def digiEventContent(process):
     #extend the event content
 
-    alist=['RAWSIM','RAWDEBUG','FEVTDEBUG','FEVTDEBUGHLT','GENRAW','RAWSIMHLT','FEVT','PREMIX','PREMIXRAW']
+    alist=['RAWDEBUG','FEVTDEBUG','FEVTDEBUGHLT','GENRAW','RAWSIMHLT','FEVT']
     for a in alist:
         b = a + 'output'
         if hasattr(process,b):

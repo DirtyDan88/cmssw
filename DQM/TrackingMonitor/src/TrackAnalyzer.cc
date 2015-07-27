@@ -479,7 +479,7 @@ void TrackAnalyzer::bookHistosForBeamSpot(DQMStore::IBooker & ibooker) {
       
       histname = "DistanceOfClosestApproachToBSVsPhi_";
       DistanceOfClosestApproachToBSVsPhi = ibooker.bookProfile(histname+CategoryName,histname+CategoryName, PhiBin, PhiMin, PhiMax, DxyBin, DxyMin, DxyMax,"");
-      DistanceOfClosestApproachToBSVsPhi->getTH1()->SetBit(TH1::kCanRebin);
+      DistanceOfClosestApproachToBSVsPhi->getTH1()->SetCanExtend(TH1::kAllAxes);
       DistanceOfClosestApproachToBSVsPhi->setAxisTitle("Track #phi",1);
       DistanceOfClosestApproachToBSVsPhi->setAxisTitle("Track d_{xy} wrt beam spot (cm)",2);
       
@@ -540,7 +540,7 @@ void TrackAnalyzer::bookHistosForBeamSpot(DQMStore::IBooker & ibooker) {
       
       histname = "DistanceOfClosestApproachToPVVsPhi_";
       DistanceOfClosestApproachToPVVsPhi = ibooker.bookProfile(histname+CategoryName,histname+CategoryName, PhiBin, PhiMin, PhiMax, DxyBin, DxyMin, DxyMax,"");
-      DistanceOfClosestApproachToPVVsPhi->getTH1()->SetBit(TH1::kCanRebin);
+      DistanceOfClosestApproachToPVVsPhi->getTH1()->SetCanExtend(TH1::kAllAxes);
       DistanceOfClosestApproachToPVVsPhi->setAxisTitle("Track #phi",1);
       DistanceOfClosestApproachToPVVsPhi->setAxisTitle("Track d_{xy} wrt beam spot (cm)",2);
       
@@ -574,7 +574,7 @@ void TrackAnalyzer::bookHistosForBeamSpot(DQMStore::IBooker & ibooker) {
 	
 	histname = "TESTDistanceOfClosestApproachToBSVsPhi_";
 	TESTDistanceOfClosestApproachToBSVsPhi = ibooker.bookProfile(histname+CategoryName,histname+CategoryName, PhiBin, PhiMin, PhiMax, DxyBin, DxyMin, DxyMax,"");
-	TESTDistanceOfClosestApproachToBSVsPhi->getTH1()->SetBit(TH1::kCanRebin);
+	TESTDistanceOfClosestApproachToBSVsPhi->getTH1()->SetCanExtend(TH1::kAllAxes);
 	TESTDistanceOfClosestApproachToBSVsPhi->setAxisTitle("Track #phi",1);
 	TESTDistanceOfClosestApproachToBSVsPhi->setAxisTitle("Track d_{xy} wrt beam spot (cm)",2);
 	
@@ -625,7 +625,7 @@ void TrackAnalyzer::bookHistosForBeamSpot(DQMStore::IBooker & ibooker) {
 	
 	histname = "DistanceOfClosestApproachVsPhi_";
 	DistanceOfClosestApproachVsPhi = ibooker.bookProfile(histname+CategoryName,histname+CategoryName, PhiBin, PhiMin, PhiMax, DxyMin,DxyMax,"");
-	DistanceOfClosestApproachVsPhi->getTH1()->SetBit(TH1::kCanRebin);
+	DistanceOfClosestApproachVsPhi->getTH1()->SetCanExtend(TH1::kAllAxes);
 	DistanceOfClosestApproachVsPhi->setAxisTitle("Track #phi",1);
 	DistanceOfClosestApproachVsPhi->setAxisTitle("Track d_{xy} wrt (0,0,0) (cm)",2);
       }
@@ -1265,7 +1265,7 @@ void TrackAnalyzer::fillHistosForState(const edm::EventSetup& iSetup, const reco
       tkmes.NumberOfValidRecHitsPerTrackVsPhi->Fill(phi,    nValidRecHits);
       tkmes.NumberOfValidRecHitsPerTrackVsEta->Fill(eta,    nValidRecHits);
 
-      int nLayers = track.hitPattern().stripLayersWithMeasurement();
+      int nLayers = track.hitPattern().trackerLayersWithMeasurement();
       // rec layers 
       tkmes.NumberOfLayersPerTrackVsPhi->Fill(phi,     nLayers);
       if (doThetaPlots_) {

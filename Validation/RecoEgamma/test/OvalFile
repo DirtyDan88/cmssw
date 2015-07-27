@@ -1,12 +1,12 @@
 <var name="TEST_COMMENT" value="">
-<var name="TEST_NEW" value="7_5_0_pre2_std">
-<var name="TEST_REF" value="7_5_0_pre1_std">
+<var name="TEST_NEW" value="7_5_0_pre5_std">
+<var name="TEST_REF" value="7_5_0_pre4_std">
 
-<var name="TAG_STARTUP" value="MCRUN2_74_V7">
+<var name="TAG_STARTUP" value="MCRUN2_75_V5">
 <var name="DATA_VERSION" value="v1">
 
 TAG for the REFERENCE DATA, USED ONLY FOR INFORMATION ON WEB PAGE
-<var name="DD_COND_REF" value="MCRUN2_74_V7-v1">
+<var name="DD_COND_REF" value="MCRUN2_75_V1-v1">
 
 <var name="DD_RELEASE" value="${CMSSW_VERSION}">
 
@@ -158,7 +158,7 @@ FullSim
       <target name="wget" cmd="electronWget.py castor">
       
       <target name="dd" cmd="electronDataDiscovery.py">
-      <target name="analyze" cmd="cmsRun ElectronMcSignalPt1000Validation_cfg.py">
+      <target name="analyze" cmd="cmsRun ElectronMcSignalValidationPt1000_cfg.py">
       <target name="finalize" cmd="cmsRun ${VAL_POST_CONFIGURATION}.py">
       
       <target name="store" cmd='electronStore.py -r ${TEST_NEW} -m "${TEST_COMMENT}" -a ${VAL_ANALYZER}/${VAL_POST_ANALYZER} -c ${VAL_CONFIGURATION}/${VAL_POST_CONFIGURATION} ${TEST_HISTOS_FILE} ${TEST_OUTPUT_LOGS} ${STORE_DIR}'>
