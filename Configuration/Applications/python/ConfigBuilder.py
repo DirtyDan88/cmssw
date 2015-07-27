@@ -518,9 +518,12 @@ class ConfigBuilder(object):
 				theEventContent = cms.PSet(outputCommands = cms.untracked.vstring('keep *'))
 			else:
 				theEventContent = getattr(self.process, theStreamType+"EventContent")
-				
+
+
+			addAlCaSelects=False
 			if theStreamType=='ALCARECO' and not theFilterName:
 				theFilterName='StreamALCACombined'
+				addAlCaSelects=True
 
 			CppType='PoolOutputModule'
 			if self._options.timeoutOutput:
@@ -539,6 +542,13 @@ class ConfigBuilder(object):
 				output.SelectEvents = cms.untracked.PSet(SelectEvents = cms.vstring('filtering_step'))				
 			if theSelectEvent:
 				output.SelectEvents =cms.untracked.PSet(SelectEvents = cms.vstring(theSelectEvent))
+
+			if addAlCaSelects:
+				if not hasattr(output,'SelectEvents'):
+					output.SelectEvents=cms.untracked.PSet(SelectEvents=cms.vstring())
+				for alca in self.AlCaPaths:
+					output.SelectEvents.SelectEvents.extend(getattr(self.process,'OutALCARECO'+alca).SelectEvents.SelectEvents)
+
 			
 			if hasattr(self.process,theModuleLabel):
 				raise Exception("the current process already has a module "+theModuleLabel+" defined")
@@ -1246,6 +1256,7 @@ class ConfigBuilder(object):
 
     def prepare_ALCA(self, sequence = None, workflow = 'full'):
         """ Enrich the process with alca streams """
+	print 'DL enriching',workflow,sequence
         alcaConfig=self.loadDefaultOrSpecifiedCFF(sequence,self.ALCADefaultCFF)
         sequence = sequence.split('.')[-1]
 
@@ -1255,12 +1266,14 @@ class ConfigBuilder(object):
 	from Configuration.AlCa.autoAlca import autoAlca
 	# support @X from autoAlca.py, and recursion support: i.e T0:@Mu+@EG+...
 	self.expandMapping(alcaList,autoAlca)
-	
+	self.AlCaPaths=[]
         for name in alcaConfig.__dict__:
             alcastream = getattr(alcaConfig,name)
             shortName = name.replace('ALCARECOStream','')
             if shortName in alcaList and isinstance(alcastream,cms.FilteredStream):
 	        output = self.addExtraStream(name,alcastream, workflow = workflow)
+		self.executeAndRemember('process.ALCARECOEventContent.outputCommands.extend(process.OutALCARECO'+shortName+'_noDrop.outputCommands)')
+		self.AlCaPaths.append(shortName)
 		if 'DQM' in alcaList:
 			if not self._options.inlineEventContent and hasattr(self.process,name):
 				self.executeAndRemember('process.' + name + '.outputCommands.append("keep *_MEtoEDMConverter_*_*")')
@@ -2042,7 +2055,7 @@ class ConfigBuilder(object):
 
 
         outputModuleCfgCode=""
-        if not 'HARVESTING' in self.stepMap.keys() and not 'SKIM' in self.stepMap.keys() and not 'ALCAHARVEST' in self.stepMap.keys() and not 'ALCAOUTPUT' in self.stepMap.keys() and self.with_output:
+        if not 'HARVESTING' in self.stepMap.keys() and not 'ALCAHARVEST' in self.stepMap.keys() and not 'ALCAOUTPUT' in self.stepMap.keys() and self.with_output:
                 outputModuleCfgCode=self.addOutput()
 
         self.addCommon()
@@ -2120,31 +2133,30 @@ class ConfigBuilder(object):
                 self.pythonCfgCode += dumpPython(self.process,endpath)
 
         # dump the schedule
-	if not self._options.runUnscheduled:	
-		self.pythonCfgCode += "\n# Schedule definition\n"
-		result = "process.schedule = cms.Schedule("
+	self.pythonCfgCode += "\n# Schedule definition\n"
+	result = "process.schedule = cms.Schedule("
 
-                # handling of the schedule
-		self.process.schedule = cms.Schedule()
-		for item in self.schedule:
-			if not isinstance(item, cms.Schedule):
-				self.process.schedule.append(item)
-			else:
-				self.process.schedule.extend(item)
-
-		if hasattr(self.process,"HLTSchedule"):
-			beforeHLT = self.schedule[:self.schedule.index(self.process.HLTSchedule)]
-			afterHLT = self.schedule[self.schedule.index(self.process.HLTSchedule)+1:]
-			pathNames = ['process.'+p.label_() for p in beforeHLT]
-			result += ','.join(pathNames)+')\n'
-			result += 'process.schedule.extend(process.HLTSchedule)\n'
-			pathNames = ['process.'+p.label_() for p in afterHLT]
-			result += 'process.schedule.extend(['+','.join(pathNames)+'])\n'
+        # handling of the schedule
+	self.process.schedule = cms.Schedule()
+	for item in self.schedule:
+		if not isinstance(item, cms.Schedule):
+			self.process.schedule.append(item)
 		else:
-			pathNames = ['process.'+p.label_() for p in self.schedule]
-			result ='process.schedule = cms.Schedule('+','.join(pathNames)+')\n'
+			self.process.schedule.extend(item)
 
-	        self.pythonCfgCode += result
+	if hasattr(self.process,"HLTSchedule"):
+		beforeHLT = self.schedule[:self.schedule.index(self.process.HLTSchedule)]
+		afterHLT = self.schedule[self.schedule.index(self.process.HLTSchedule)+1:]
+		pathNames = ['process.'+p.label_() for p in beforeHLT]
+		result += ','.join(pathNames)+')\n'
+		result += 'process.schedule.extend(process.HLTSchedule)\n'
+		pathNames = ['process.'+p.label_() for p in afterHLT]
+		result += 'process.schedule.extend(['+','.join(pathNames)+'])\n'
+	else:
+		pathNames = ['process.'+p.label_() for p in self.schedule]
+		result ='process.schedule = cms.Schedule('+','.join(pathNames)+')\n'
+
+	self.pythonCfgCode += result
 
 	if self._options.nThreads is not "1":
 		self.pythonCfgCode +="\n"
@@ -2182,13 +2194,23 @@ class ConfigBuilder(object):
 		#this is not supporting the blacklist at this point since I do not understand it
 		self.pythonCfgCode+="#do not add changes to your config after this point (unless you know what you are doing)\n"
 		self.pythonCfgCode+="from FWCore.ParameterSet.Utilities import convertToUnscheduled\n"
-
 		self.pythonCfgCode+="process=convertToUnscheduled(process)\n"
+
+		from FWCore.ParameterSet.Utilities import convertToUnscheduled
+		self.process=convertToUnscheduled(self.process)
 
 		#now add the unscheduled stuff
 		for module in self.importsUnsch:
 			self.process.load(module)
 			self.pythonCfgCode += ("process.load('"+module+"')\n")
+
+		#and clean the unscheduled stuff	
+		self.pythonCfgCode+="from FWCore.ParameterSet.Utilities import cleanUnscheduled\n"
+		self.pythonCfgCode+="process=cleanUnscheduled(process)\n"
+
+		from FWCore.ParameterSet.Utilities import cleanUnscheduled
+		self.process=cleanUnscheduled(self.process)
+
 
 	self.pythonCfgCode += self.addCustomise(1)
 

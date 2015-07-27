@@ -55,7 +55,7 @@ class HLTProcess(object):
 
     # get the configuration from ConfdB
     from confdbOfflineConverter import OfflineConverter
-    self.converter = OfflineConverter(database = self.config.menu.db)
+    self.converter = OfflineConverter(version = self.config.menu.version, database = self.config.menu.database)
     self.buildPathList()
     self.buildOptions()
     self.getRawConfigurationFromDB()
@@ -74,10 +74,8 @@ class HLTProcess(object):
 
     data, err = self.converter.query( *args )
     if 'ERROR' in err or 'Exhausted Resultset' in err or 'CONFIG_NOT_FOUND' in err:
-        print "%s: error while retriving the HLT menu" % os.path.basename(sys.argv[0])
-        print
-        print err
-        print
+        sys.stderr.write("%s: error while retrieving the HLT menu\n\n" % os.path.basename(sys.argv[0]))
+        sys.stderr.write(err + "\n\n")
         sys.exit(1)
     self.data = data
 
@@ -98,10 +96,8 @@ class HLTProcess(object):
 
     data, err = self.converter.query( *args )
     if 'ERROR' in err or 'Exhausted Resultset' in err or 'CONFIG_NOT_FOUND' in err:
-        print "%s: error while retriving the list of paths from the HLT menu" % os.path.basename(sys.argv[0])
-        print
-        print err
-        print
+        sys.stderr.write("%s: error while retrieving the list of paths from the HLT menu\n\n" % os.path.basename(sys.argv[0]))
+        sys.stderr.write(err + "\n\n")
         sys.exit(1)
     filter = re.compile(r' *= *cms.(End)?Path.*')
     paths  = [ filter.sub('', line) for line in data.splitlines() if filter.search(line) ]
@@ -255,13 +251,19 @@ if 'hltGetConditions' in %(dict)s and 'HLTriggerFirstPath' in %(dict)s :
         if '50ns' in self.config.type :
           self.data += """
 # load 2015 Run-2 L1 Menu for 50ns
-from L1Trigger.Configuration.customise_overwriteL1Menu import L1Menu_Collisions2015_50ns_v1 as loadL1Menu
+from L1Trigger.Configuration.customise_overwriteL1Menu import L1Menu_Collisions2015_50ns_v3 as loadL1Menu
 process = loadL1Menu(process)
 """
         elif 'HIon' in self.config.type :
           self.data += """
 # load 2015 Run-2 L1 Menu for HIon
 from L1Trigger.Configuration.customise_overwriteL1Menu import L1Menu_CollisionsHeavyIons2015_v0 as loadL1Menu
+process = loadL1Menu(process)
+"""
+        elif 'LowPU' in self.config.type :
+          self.data += """
+# load 2015 Run-2 L1 Menu for LowPU
+from L1Trigger.Configuration.customise_overwriteL1Menu import  L1Menu_Collisions2015_lowPU_v3 as loadL1Menu
 process = loadL1Menu(process)
 """
         else :
